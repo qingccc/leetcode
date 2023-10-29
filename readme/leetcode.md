@@ -98,7 +98,7 @@ pre now next
 
 反转链表
 
-next = cur.nex
+next = cur.next
 
 .next = pre
 
@@ -183,6 +183,19 @@ class Solution:
 不能成环
 
 考虑边界值 不能为None
+
+
+
+**需要注意的问题**
+
+1. 严谨度判断 一般是判断是都是null 如果是null 返回null
+2. 对于while 循环里 一般是使用node !=null 表示遍历到最终节点 并且一般我们在循环体里会使用 node.next
+   如果这里使用node.next!=null 那么终止条件是 node.next==null node 对应的是最后一个有值的节点 一般是因为我们要去去这些的值
+   ![image-20230910164506347](leetcode.assets/image-20230910164506347.png)
+
+如果非此种情况，而是正常的遍历 那么使用的话就需要返回node.next 感觉比较麻烦
+
+**总之，正常情况下 使用while(node != null )的这种情况多一点**
 
 ## 数组
 
