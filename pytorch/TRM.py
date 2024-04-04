@@ -50,7 +50,10 @@ class MultiHeadAttention(nn.Module):
     def __init__(self):
         super(MultiHeadAttention, self).__init__()
         ## 输入进来的QKV是相等的，我们会使用映射linear做一个映射得到参数矩阵Wq, Wk,Wv
-        self.W_Q = nn.Linear(d_model, d_k * n_heads)
+        self.W_Q = nn.Linear(d_model, d_k * n_heads) #
+        # 对应的参数量是 dim_model * dim_qkv * n_head 另外线性层还有偏置项b 维度为dim_qkv
+        # 每个线性层的维度是 dim_model * dim_qkv + dim_qkv
+        # 共num_heads个  qkv 三个 总的参数量是 3 *num_heads*(dim_model *dim_qkv+dim_qkv)
         self.W_K = nn.Linear(d_model, d_k * n_heads)
         self.W_V = nn.Linear(d_model, d_v * n_heads)
         self.linear = nn.Linear(n_heads * d_v, d_model)
@@ -71,10 +74,10 @@ class MultiHeadAttention(nn.Module):
         ## 输入进行的attn_mask形状是 batch_size x len_q x len_k，然后经过下面这个代码得到 新的attn_mask : [batch_size x n_heads x len_q x len_k]，就是把pad信息重复了n个头上
         attn_mask = attn_mask.unsqueeze(1).repeat(1, n_heads, 1, 1)
 
-
         ##然后我们计算 ScaledDotProductAttention 这个函数，去7.看一下
         ## 得到的结果有两个：context: [batch_size x n_heads x len_q x d_v], attn: [batch_size x n_heads x len_q x len_k]
         context, attn = ScaledDotProductAttention()(q_s, k_s, v_s, attn_mask)
+        # 3) "Concat" using a view and apply a final linear. 这一行后context变成了bsh
         context = context.transpose(1, 2).contiguous().view(batch_size, -1, n_heads * d_v) # context: [batch_size x len_q x n_heads * d_v]
         output = self.linear(context)
         return self.layer_norm(output + residual), attn # output: [batch_size x len_q x d_model]
@@ -127,6 +130,8 @@ class PositionalEncoding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
         pe = torch.zeros(max_len, d_model)
+        #unsqueeze 在0维度插入一维 这里这个max_len 传进来的时候是dim_model
+        # 其实就是embedding size 的大小 position需要根据句子长度编码
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)## 这里需要注意的是pe[:, 0::2]这个用法，就是从0开始到最后面，补长为2，其实代表的就是偶数位置
@@ -260,13 +265,13 @@ class Transformer(nn.Module):
 
 if __name__ == '__main__':
 
-    ## 句子的输入部分，
+    ## 句子的输入部分， 分别是en_input out_input target
     sentences = ['ich mochte ein bier P', 'S i want a beer', 'i want a beer E']
 
 
     # Transformer Parameters
     # Padding Should be Zero
-    ## 构建词表
+    ## 构建词表 tokenization P S E p为padding 用于填充句子长度 为seq_length
     src_vocab = {'P': 0, 'ich': 1, 'mochte': 2, 'ein': 3, 'bier': 4}
     src_vocab_size = len(src_vocab)
 
@@ -277,26 +282,26 @@ if __name__ == '__main__':
     tgt_len = 5 # length of target
 
     ## 模型参数
-    d_model = 512  # Embedding Size
-    d_ff = 2048  # FeedForward dimension
-    d_k = d_v = 64  # dimension of K(=Q), V
+    d_model = 512  # Embedding Size  也是hiddensize
+    d_ff = 2048  # FeedForward dimension 全连接层的中间隐藏层大小
+    d_k = d_v = 64  # dimension of K(=Q), V # k 和 v 的embedding长度 这个*n_heads=d-model的size 也可以选择自己设置
     n_layers = 6  # number of Encoder of Decoder Layer
-    n_heads = 8  # number of heads in Multi-Head Attention
+    n_heads = 8  # number of heads in Multi-Head Attention # 把embedding 投影到8维上面 每个head学习不同的attention
 
     model = Transformer()
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-
+    # 先做数据处理 分成一个batch  这个示例里的batchsize是1
     enc_inputs, dec_inputs, target_batch = make_batch(sentences)
 
     for epoch in range(20):
-        optimizer.zero_grad()
+        optimizer.zero_grad() # 梯度清0
         outputs, enc_self_attns, dec_self_attns, dec_enc_attns = model(enc_inputs, dec_inputs)
-        loss = criterion(outputs, target_batch.contiguous().view(-1))
+        loss = criterion(outputs, target_batch.contiguous().view(-1)) # 计算输出loss
         print('Epoch:', '%04d' % (epoch + 1), 'cost =', '{:.6f}'.format(loss))
-        loss.backward()
-        optimizer.step()
+        loss.backward() # 反向传播计算梯度
+        optimizer.step() # 梯度下降法更新梯度 然后进行下一个step(iteration)迭代
 
 
 

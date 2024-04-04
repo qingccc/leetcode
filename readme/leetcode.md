@@ -12,11 +12,34 @@
 
 后面两种我们统称为`可变窗口`。当然不管是哪种类型基本的思路都是一样的，不一样的仅仅是代码细节。
 
-**注意：**
+### [固定窗口大小](https://github.com/azl397985856/leetcode/blob/master/thinkings/slide-window.md#固定窗口大小)
 
-记住最外层用for循环 不要用while循环
+对于固定窗口，我们只需要固定初始化左右指针 l 和 r，分别表示的窗口的左右顶点，并且保证：
 
-### 伪代码
+1. l 初始化为 0
+2. 初始化 r，使得 r - l + 1 等于窗口大小
+3. 同时移动 l 和 r
+4. 判断窗口内的连续元素是否满足题目限定的条件
+   - 4.1 如果满足，再判断是否需要更新最优解，如果需要则更新最优解
+   - 4.2 如果不满足，则继续。
+
+### [可变窗口大小](https://github.com/azl397985856/leetcode/blob/master/thinkings/slide-window.md#可变窗口大小)
+
+对于可变窗口，我们同样固定初始化左右指针 l 和 r，分别表示的窗口的左右顶点。后面有所不同，我们需要保证：
+
+1. l 和 r 都初始化为 0
+2. r 指针移动一步
+3. 判断窗口内的连续元素是否满足题目限定的条件
+   - 3.1 如果满足，再判断是否需要更新最优解，如果需要则更新最优解。并尝试通过移动 l 指针缩小窗口大小。循环执行 3.1
+   - 3.2 如果不满足，则继续。
+
+形象地来看的话，就是 r 指针不停向右移动，l 指针仅仅在窗口满足条件之后才会移动，起到窗口收缩的效果。
+
+#### **注意：**
+
+==记住最外层用for循环 不要用while循环==
+
+#### 伪代码
 
 ```
 初始化慢指针 = 0
@@ -100,7 +123,7 @@ pre now next
 
 next = cur.next
 
-.next = pre
+cur.next = pre
 
 cur = next
 
@@ -112,7 +135,7 @@ node = LinkNode.head()
 while node!=NULL:
   print(node.val)
   node = node.next
-# 链表的新增在node的后面添加
+# 链表的新增在node的后面添加 tenp是要加入的
 tmp_node = LinkNode()
 while node!=None:
     now = pre.next
@@ -201,6 +224,50 @@ class Solution:
 
 ## 树
 
+
+
 ## 回溯
 
 ## 动态规划
+
+定义dp矩阵和边界条件
+
+python定义二维矩阵
+
+dp = [[i for i in range(len_1)] for j in range(len_2)]
+
+## 双指针
+
+快慢指针
+
+两头指针
+
+在处理数组和链表相关问题时，双指针技巧是经常用到的，双指针技巧主要分为两类：**左右指针**和**快慢指针**
+
+如果是提到有序数组 就可以想到双指针 因为双指针遍历比直接循环的时间复杂度小很多
+
+```python
+# 基本句式
+while(left < right):
+  # 终止条件
+  # eg:
+  if nums[left] + nums[right] == target:
+     return 
+  # 或者 如果是接雨水的话 就是left == right 就算return了  所以 while里面是left<=right
+  if xxx:
+    left += 1
+  else:
+    right -= 1
+    
+```
+
+接雨水
+
+几个数之和 
+
+移除数组(不增加额外空间)
+
+下一个排列  其实排列类型的有点类似于回溯
+
+[
+\46. 全排列](https://leetcode.cn/problems/permutations/description/)[47. 全排列 II](https://leetcode.cn/problems/permutations-ii/description/)[60. 排列序列](https://leetcode.cn/problems/permutation-sequence/description/)

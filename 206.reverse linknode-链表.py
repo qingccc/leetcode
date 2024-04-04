@@ -14,3 +14,10 @@ class Solution:
             pre = cur
             cur = tmp
         return pre
+
+if __name__ == '__main__':
+    import random
+
+    x = "WELCOME"
+
+    print(random.choice(x))
